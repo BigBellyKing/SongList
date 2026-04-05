@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎤 My Karaoke Songbook</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0b14;
+    --surface: #16111f;
+    --surface2: #1e1730;
+    --border: #2e2545;
+    --accent: #c084fc;
+    --accent2: #f472b6;
+    --accent3: #38bdf8;
+    --text: #f0e8ff;
+    --muted: #8b7aaa;
+    --gold: #fbbf24;
+    --green: #4ade80;
+    --red: #f87171;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Ambient background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -40%;
+    left: -20%;
+    width: 80vw;
+    height: 80vw;
+    background: radial-gradient(circle, rgba(192,132,252,0.07) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -30%;
+    right: -10%;
+    width: 60vw;
+    height: 60vw;
+    background: radial-gradient(circle, rgba(244,114,182,0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 0 20px 60px; }
+
+  /* Header */
+  header {
+    text-align: center;
+    padding: 48px 0 36px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 36px;
+  }
+  header .mic-icon { font-size: 2.4rem; display: block; margin-bottom: 8px; animation: pulse 3s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.12)} }
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.1;
+  }
+  header p {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-top: 8px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.05em;
+  }
+  .song-count {
+    display: inline-block;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 0.8rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--accent);
+    margin-top: 10px;
+  }
+
+  /* Controls bar */
+  .controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    align-items: center;
+  }
+  .search-wrap {
+    flex: 1;
+    min-width: 220px;
+    position: relative;
+  }
+  .search-wrap input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 16px 11px 42px;
+    color: var(--text);
+    font-size: 0.95rem;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .search-wrap input:focus { border-color: var(--accent); }
+  .search-wrap input::placeholder { color: var(--muted); }
+  .search-wrap .icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1rem;
+    pointer-events: none;
+  }
+
+  .filter-select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    cursor: pointer;
+    transition: border-color .2s;
+  }
+  .filter-select:focus { border-color: var(--accent); }
+
+  .btn {
+    border: none;
+    border-radius: 10px;
+    padding: 11px 18px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+  }
+  .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn-ghost {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Sort controls */
+  .sort-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .sort-bar span { color: var(--muted); font-size: 0.8rem; font-family: 'DM Mono', monospace; margin-right: 4px; }
+  .sort-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-family: 'DM Mono', monospace;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .sort-btn.active { background: var(--surface2); border-color: var(--accent); color: var(--accent); }
+  .sort-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Results info */
+  .results-info {
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 14px;
+    padding-left: 2px;
+  }
+  .results-info strong { color: var(--accent); }
+
+  /* Song Table */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  thead th {
+    background: var(--surface2);
+    padding: 13px 16px;
+    text-align: left;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  thead th:first-child { width: 90px; text-align: center; }
+  tbody tr {
+    border-bottom: 1px solid rgba(46,37,69,0.5);
+    transition: background .15s;
+    cursor: default;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    vertical-align: middle;
+  }
+  .entry-num {
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--gold);
+    background: rgba(251,191,36,0.08);
+    border-radius: 8px;
+    padding: 4px 8px;
+    display: inline-block;
+    min-width: 62px;
+  }
+  td:first-child { text-align: center; }
+  .song-title { font-weight: 400; line-height: 1.35; }
+  .artist-tag {
+    display: inline-block;
+    background: rgba(192,132,252,0.1);
+    border: 1px solid rgba(192,132,252,0.25);
+    color: var(--accent);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 0.75rem;
+    font-family: 'DM Mono', monospace;
+    margin-top: 3px;
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lang-badge {
+    display: inline-block;
+    border-radius: 5px;
+    padding: 2px 7px;
+    font-size: 0.7rem;
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .lang-en { background: rgba(56,189,248,0.12); color: var(--accent3); border: 1px solid rgba(56,189,248,0.25); }
+  .lang-tl { background: rgba(74,222,128,0.12); color: var(--green); border: 1px solid rgba(74,222,128,0.25); }
+  .lang-bi { background: rgba(251,191,36,0.12); color: var(--gold); border: 1px solid rgba(251,191,36,0.25); }
+
+  .action-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--muted);
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .action-btn:hover { border-color: var(--red); color: var(--red); }
+  .action-btn.edit-btn:hover { border-color: var(--accent3); color: var(--accent3); }
+
+  /* No results */
+  .no-results {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .no-results .big { font-size: 2.5rem; display: block; margin-bottom: 10px; }
+
+  /* Add Song Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    width: 100%;
+    max-width: 500px;
+    padding: 30px;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    animation: modalIn .2s ease;
+  }
+  @keyframes modalIn { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+  .modal h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    margin-bottom: 22px;
+    color: var(--text);
+  }
+  .modal-close {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    color: var(--muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .15s;
+  }
+  .modal-close:hover { color: var(--text); border-color: var(--accent); }
+
+  .form-group { margin-bottom: 16px; }
+  .form-group label {
+    display: block;
+    font-size: 0.8rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+  .form-group input, .form-group select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+  .form-group input::placeholder { color: var(--muted); }
+  .form-group select option { background: var(--surface2); }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .modal-actions { display: flex; gap: 10px; margin-top: 22px; justify-content: flex-end; }
+  .error-msg {
+    background: rgba(248,113,113,0.1);
+    border: 1px solid rgba(248,113,113,0.3);
+    border-radius: 8px;
+    padding: 9px 13px;
+    font-size: 0.85rem;
+    color: var(--red);
+    margin-bottom: 14px;
+    display: none;
+  }
+  .success-toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface2);
+    border: 1px solid var(--green);
+    color: var(--green);
+    padding: 12px 22px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-family: 'DM Mono', monospace;
+    z-index: 200;
+    transition: transform .35s cubic-bezier(0.34,1.56,0.64,1);
+    white-space: nowrap;
+  }
+  .success-toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Import/Export */
+  .tools-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 640px) {
+    .form-row { grid-template-columns: 1fr; }
+    thead th:nth-child(3), tbody td:nth-child(3) { display: none; }
+    .sort-bar { gap: 6px; }
+    .tools-bar { gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <span class="mic-icon">🎤</span>
+    <h1>My Karaoke Songbook</h1>
+    <p>Find your song · Enter the number · Sing your heart out</p>
+    <span class="song-count" id="songCount">— songs</span>
+  </header>
+
+  <div class="controls">
+    <div class="search-wrap">
+      <span class="icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Search by title, artist, or entry number…">
+    </div>
+    <select class="filter-select" id="langFilter">
+      <option value="">All Languages</option>
+      <option value="en">🇺🇸 English</option>
+      <option value="tl">🇵🇭 Tagalog</option>
+      <option value="bi">Bisaya</option>
+    </select>
+    <select class="filter-select" id="artistFilter">
+      <option value="">All Artists</option>
+    </select>
+    <button class="btn btn-primary" onclick="openModal()">＋ Add Song</button>
+  </div>
+
+  <div class="sort-bar">
+    <span>Sort:</span>
+    <button class="sort-btn active" data-sort="entry">Entry #</button>
+    <button class="sort-btn" data-sort="title">Title</button>
+    <button class="sort-btn" data-sort="artist">Artist</button>
+  </div>
+
+  <div class="tools-bar">
+    <button class="btn btn-ghost" onclick="exportData()">⬇ Export JSON</button>
+    <button class="btn btn-ghost" onclick="document.getElementById('importFile').click()">⬆ Import JSON</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    <button class="btn btn-ghost" onclick="printView()">🖨 Print List</button>
+  </div>
+
+  <div class="results-info" id="resultsInfo"></div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Entry #</th>
+          <th>Song Title</th>
+          <th>Artist</th>
+          <th>Lang</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="songTable"></tbody>
+    </table>
+    <div class="no-results" id="noResults" style="display:none">
+      <span class="big">🎵</span>
+      No songs match your search.
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2 id="modalTitle">🎵 Add New Song</h2>
+    <div class="error-msg" id="errorMsg"></div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Entry Number</label>
+        <input type="number" id="inputEntry" placeholder="e.g. 90250">
+      </div>
+      <div class="form-group">
+        <label>Language</label>
+        <select id="inputLang">
+          <option value="en">🇺🇸 English</option>
+          <option value="tl">🇵🇭 Tagalog</option>
+          <option value="bi">Bisaya</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Song Title</label>
+      <input type="text" id="inputTitle" placeholder="e.g. Sweet Home Alabama">
+    </div>
+    <div class="form-group">
+      <label>Artist</label>
+      <input type="text" id="inputArtist" placeholder="e.g. Lynyrd Skynyrd">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSong()">Save Song</button>
+    </div>
+  </div>
+</div>
+
+<div class="success-toast" id="toast"></div>
+
+<script>
+// ── Data ─────────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'karaoke_songbook_v1';
+
+const INITIAL_SONGS = [
+  {entry:90148,title:"Dallas",artist:"Alan Jackson",lang:"en"},
+  {entry:90149,title:"The Older I Get",artist:"Alan Jackson",lang:"en"},
+  {entry:90150,title:"Tequila Sunrise",artist:"Alan Jackson",lang:"en"},
+  {entry:90151,title:"Tropical Depression",artist:"Alan Jackson",lang:"en"},
+  {entry:90152,title:"Everything I Love",artist:"Alan Jackson",lang:"en"},
+  {entry:90153,title:"Gone Country",artist:"Alan Jackson",lang:"en"},
+  {entry:90154,title:"Livin' On Love",artist:"Alan Jackson",lang:"en"},
+  {entry:90155,title:"Amarillo By Morning",artist:"George Strait",lang:"en"},
+  {entry:90156,title:"I Need More Of You",artist:"Bellamy Brothers",lang:"en"},
+  {entry:90157,title:"Carrying Your Love With Me",artist:"George Strait",lang:"en"},
+  {entry:90158,title:"Amanda",artist:"Don Williams",lang:"en"},
+  {entry:90159,title:"Turn Out The Light And Love Me Tonight",artist:"Don Williams",lang:"en"},
+  {entry:90160,title:"Lord, I Hope This Day Is Good",artist:"Don Williams",lang:"en"},
+  {entry:90161,title:"You're My Best Friend",artist:"Don Williams",lang:"en"},
+  {entry:90162,title:"Don't Close Your Eyes",artist:"Keith Whitley",lang:"en"},
+  {entry:90163,title:"Dukha (Bisaya Version)",artist:"Israel Tillo",lang:"bi"},
+  {entry:90164,title:"Lyin' Eyes",artist:"Eagles",lang:"en"},
+  {entry:90165,title:"Evening Star",artist:"Kenny Rogers",lang:"en"},
+  {entry:90166,title:"Ginny Come Lately",artist:"Albert West",lang:"en"},
+  {entry:90167,title:"I'm a Lonesome Fugitive",artist:"Merle Haggard",lang:"en"},
+  {entry:90168,title:"Imagine That",artist:"Don Williams ft. Keith Urban",lang:"en"},
+  {entry:90169,title:"Jamaica Farewell",artist:"",lang:"en"},
+  {entry:90170,title:"Pledging My Love",artist:"Johnny Ace",lang:"en"},
+  {entry:90171,title:"Coward of the County",artist:"Kenny Rogers",lang:"en"},
+  {entry:90172,title:"I Recall A Gypsy Woman",artist:"Don Williams",lang:"en"},
+  {entry:90173,title:"Lay Down Beside Me",artist:"Don Williams",lang:"en"},
+  {entry:90174,title:"Lucille",artist:"Kenny Rogers",lang:"en"},
+  {entry:90175,title:"Sing Me Back Home",artist:"Don Williams",lang:"en"},
+  {entry:90176,title:"The Cowboy Rides Away",artist:"George Strait",lang:"en"},
+  {entry:90177,title:"Till The Rivers All Run Dry",artist:"Don Williams",lang:"en"},
+  {entry:90178,title:"If You Want To Find Love",artist:"Kenny Rogers",lang:"en"},
+  {entry:90179,title:"Life Turned Her That Way",artist:"Ricky Van Shelton",lang:"en"},
+  {entry:90180,title:"Love Me For What I Am",artist:"Lobo",lang:"en"},
+  {entry:90181,title:"The Running Kind",artist:"Merle Haggard",lang:"en"},
+  {entry:90182,title:"If There's A Phone In Heaven",artist:"Mike Manuel",lang:"en"},
+  {entry:90183,title:"One Day At A Time",artist:"",lang:"en"},
+  {entry:90184,title:"Unknown",artist:"",lang:"en"},
+  {entry:90185,title:"Daytime Friends",artist:"Kenny Rogers",lang:"en"},
+  {entry:90186,title:"Send Me A Letter Amanda",artist:"",lang:"en"},
+  {entry:90187,title:"September Morn'",artist:"Neil Diamond",lang:"en"},
+  {entry:90188,title:"Vertical Expression Of Horizontal Desire",artist:"Bellamy Brothers",lang:"en"},
+  {entry:90189,title:"Your Man",artist:"Josh Turner",lang:"en"},
+  {entry:90190,title:"I'll Leave This World Loving You",artist:"Ricky Van Shelton",lang:"en"},
+  {entry:90191,title:"Who'll Stop The Rain",artist:"Creedence Clearwater Revival",lang:"en"},
+  {entry:90192,title:"Have You Ever Seen The Rain",artist:"Creedence Clearwater Revival",lang:"en"},
+  {entry:90193,title:"I'm So Afraid Of Losing You Again",artist:"Charley Pride",lang:"en"},
+  {entry:90194,title:"Bulag Sa Carriedo",artist:"",lang:"tl"},
+  {entry:90195,title:"Life Is A River",artist:"Derek Ryan",lang:"en"},
+  {entry:90196,title:"Shelter Of Your Eyes",artist:"Don Williams",lang:"en"},
+  {entry:90197,title:"I'm Calling",artist:"Jack Jersey",lang:"en"},
+  {entry:90198,title:"Seven Spanish Angels",artist:"Heidi Hauge",lang:"en"},
+  {entry:90199,title:"Unang Luha",artist:"Bern Marzan",lang:"tl"},
+  {entry:90200,title:"Crystal Chandeliers",artist:"Charley Pride",lang:"en"},
+  {entry:90201,title:"Shelter Of Your Eyes",artist:"Don Williams",lang:"en"},
+  {entry:90202,title:"Farewell Jamaica",artist:"",lang:"en"},
+  {entry:90203,title:"Sobrang Talino Ng Tao",artist:"Richie D'Horsie",lang:"tl"},
+  {entry:90204,title:"There Ain't No Way",artist:"Lobo",lang:"en"},
+  {entry:90205,title:"Tuloy Ang Laban",artist:"Freddie Aguilar",lang:"tl"},
+  {entry:90206,title:"We Got Love",artist:"Don Williams",lang:"en"},
+  {entry:90207,title:"Healing Hands",artist:"Don Williams",lang:"en"},
+  {entry:90208,title:"I'll Be Here This Morning",artist:"Don Williams",lang:"en"},
+  {entry:90209,title:"Sa Paskong Darating",artist:"Freddie Aguilar",lang:"tl"},
+  {entry:90210,title:"Sa Piling Mo",artist:"Bing Rodrigo",lang:"tl"},
+  {entry:90211,title:"Ngayong Wala Ka Na",artist:"Bing Rodrigo",lang:"tl"},
+  {entry:90212,title:"Pasko Ang Damdamin",artist:"Freddie Aguilar",lang:"tl"},
+  {entry:90213,title:"Pasko Na Naman Kaibigan",artist:"Freddie Aguilar",lang:"tl"},
+  {entry:90214,title:"Pasko Sa Binilanggo",artist:"Max Surban",lang:"bi"},
+  {entry:90215,title:"Wika Ng Pag-Ibig",artist:"Bing Rodrigo",lang:"tl"},
+  {entry:90216,title:"Free",artist:"Kpop Demon Hunters",lang:"en"},
+  {entry:90217,title:"Golden",artist:"Kpop Demon Hunters",lang:"en"},
+  {entry:90218,title:"How It's Done",artist:"Kpop Demon Hunters",lang:"en"},
+  {entry:90219,title:"Soda Pop",artist:"Kpop Demon Hunters Saja Boys",lang:"en"},
+  {entry:90220,title:"Takedown",artist:"Kpop Demon Hunters",lang:"en"},
+  {entry:90221,title:"What It Sounds Like",artist:"Kpop Demon Hunters",lang:"en"},
+  {entry:90222,title:"Your Idol",artist:"Kpop Demon Hunters Saja Boys",lang:"en"},
+  {entry:90223,title:"Multo",artist:"Cup of Joe",lang:"tl"},
+  {entry:90224,title:"Manchild",artist:"Sabrina Carpenter",lang:"en"},
+  {entry:90225,title:"All The Time In The World",artist:"Dr. Hook",lang:"en"},
+  {entry:90226,title:"Bolatik Lang",artist:"Max Surban",lang:"bi"},
+  {entry:90227,title:"Dirty Look",artist:"Max Surban",lang:"bi"},
+  {entry:90228,title:"Forever Ain't Long Enough",artist:"Bellamy Brothers",lang:"en"},
+  {entry:90229,title:"No Country For Old Man",artist:"Bellamy Brothers",lang:"en"},
+  {entry:90230,title:"A Night To Remember",artist:"beabadoobee x Laufey",lang:"en"},
+  {entry:90231,title:"Wildflower",artist:"Billie Eilish",lang:"en"},
+  {entry:90232,title:"Bewitched",artist:"Laufey",lang:"en"},
+  {entry:90233,title:"Falling Behind",artist:"Laufey",lang:"en"},
+  {entry:90234,title:"Forget-Me-Not",artist:"Laufey",lang:"en"},
+  {entry:90235,title:"From The Start",artist:"Laufey",lang:"en"},
+  {entry:90236,title:"Goddess",artist:"Laufey",lang:"en"},
+  {entry:90237,title:"I Wish You Love",artist:"Laufey",lang:"en"},
+  {entry:90238,title:"Promise",artist:"Laufey",lang:"en"},
+  {entry:90239,title:"Too Little Too Late",artist:"Laufey",lang:"en"},
+  {entry:90240,title:"Valentine",artist:"Laufey",lang:"en"},
+  {entry:90241,title:"Let You Break My Heart Again",artist:"Laufey",lang:"en"},
+  {entry:90242,title:"All I Want For Christmas Is You",artist:"Mariah Carey",lang:"en"},
+  {entry:90243,title:"Lover Girl",artist:"Laufey",lang:"en"},
+  {entry:90244,title:"Santa Baby",artist:"Laufey",lang:"en"},
+  {entry:90246,title:"Bakit Mo Nagawa",artist:"Bern Marzan",lang:"tl"},
+  {entry:90247,title:"Mabugnaw Ang Lasa",artist:"Pirot",lang:"bi"},
+];
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let songs = [];
+let sortBy = 'entry';
+let editingEntry = null;
+
+function loadData() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  songs = saved ? JSON.parse(saved) : [...INITIAL_SONGS];
+}
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(songs));
+}
+
+// ── Rendering ─────────────────────────────────────────────────────────────────
+function langBadge(lang) {
+  if (lang === 'tl') return '<span class="lang-badge lang-tl">TL</span>';
+  if (lang === 'bi') return '<span class="lang-badge lang-bi">BI</span>';
+  return '<span class="lang-badge lang-en">EN</span>';
+}
+
+function render() {
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  const langF = document.getElementById('langFilter').value;
+  const artistF = document.getElementById('artistFilter').value;
+
+  let filtered = songs.filter(s => {
+    const matchQ = !q || s.entry.toString().includes(q) || s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q);
+    const matchL = !langF || s.lang === langF;
+    const matchA = !artistF || s.artist === artistF;
+    return matchQ && matchL && matchA;
+  });
+
+  // Sort
+  filtered.sort((a, b) => {
+    if (sortBy === 'entry') return a.entry - b.entry;
+    if (sortBy === 'title') return a.title.localeCompare(b.title);
+    if (sortBy === 'artist') return (a.artist || 'zzz').localeCompare(b.artist || 'zzz');
+  });
+
+  const tbody = document.getElementById('songTable');
+  const noRes = document.getElementById('noResults');
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    noRes.style.display = 'block';
+  } else {
+    noRes.style.display = 'none';
+    tbody.innerHTML = filtered.map(s => `
+      <tr>
+        <td><span class="entry-num">${s.entry}</span></td>
+        <td class="song-title">${escHtml(s.title)}</td>
+        <td>${s.artist ? `<span class="artist-tag" title="${escHtml(s.artist)}">${escHtml(s.artist)}</span>` : '<span style="color:var(--muted);font-size:0.8rem">—</span>'}</td>
+        <td>${langBadge(s.lang)}</td>
+        <td>
+          <button class="action-btn edit-btn" onclick="editSong(${s.entry})" title="Edit">✏️</button>
+          <button class="action-btn" onclick="deleteSong(${s.entry})" title="Delete">🗑</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // Update count & info
+  document.getElementById('songCount').textContent = `${songs.length} song${songs.length !== 1 ? 's' : ''}`;
+  document.getElementById('resultsInfo').innerHTML = q || langF || artistF
+    ? `Showing <strong>${filtered.length}</strong> of <strong>${songs.length}</strong> songs`
+    : `Showing all <strong>${songs.length}</strong> songs`;
+
+  // Artist filter options
+  const artistSel = document.getElementById('artistFilter');
+  const curArtist = artistSel.value;
+  const artists = [...new Set(songs.map(s => s.artist).filter(Boolean))].sort();
+  artistSel.innerHTML = '<option value="">All Artists</option>' +
+    artists.map(a => `<option value="${escHtml(a)}" ${a === curArtist ? 'selected' : ''}>${escHtml(a)}</option>`).join('');
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Sort ──────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.sort-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    sortBy = btn.dataset.sort;
+    render();
+  });
+});
+
+document.getElementById('searchInput').addEventListener('input', render);
+document.getElementById('langFilter').addEventListener('change', render);
+document.getElementById('artistFilter').addEventListener('change', render);
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+function openModal(prefill = null) {
+  editingEntry = null;
+  document.getElementById('modalTitle').textContent = '🎵 Add New Song';
+  document.getElementById('inputEntry').value = prefill?.entry || '';
+  document.getElementById('inputTitle').value = prefill?.title || '';
+  document.getElementById('inputArtist').value = prefill?.artist || '';
+  document.getElementById('inputLang').value = prefill?.lang || 'en';
+  document.getElementById('errorMsg').style.display = 'none';
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('inputEntry').focus();
+}
+function editSong(entry) {
+  const s = songs.find(x => x.entry === entry);
+  if (!s) return;
+  editingEntry = entry;
+  document.getElementById('modalTitle').textContent = '✏️ Edit Song';
+  document.getElementById('inputEntry').value = s.entry;
+  document.getElementById('inputTitle').value = s.title;
+  document.getElementById('inputArtist').value = s.artist;
+  document.getElementById('inputLang').value = s.lang;
+  document.getElementById('errorMsg').style.display = 'none';
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  editingEntry = null;
+}
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal')) closeModal();
+});
+
+function saveSong() {
+  const entry = parseInt(document.getElementById('inputEntry').value);
+  const title = document.getElementById('inputTitle').value.trim();
+  const artist = document.getElementById('inputArtist').value.trim();
+  const lang = document.getElementById('inputLang').value;
+  const errEl = document.getElementById('errorMsg');
+
+  if (!entry || isNaN(entry)) { showError('Please enter a valid entry number.'); return; }
+  if (!title) { showError('Please enter a song title.'); return; }
+
+  const duplicate = songs.find(s => s.entry === entry && s.entry !== editingEntry);
+  if (duplicate) { showError(`Entry #${entry} already exists: "${duplicate.title}"`); return; }
+
+  if (editingEntry !== null) {
+    const idx = songs.findIndex(s => s.entry === editingEntry);
+    songs[idx] = { entry, title, artist, lang };
+    showToast('✅ Song updated!');
+  } else {
+    songs.push({ entry, title, artist, lang });
+    showToast('🎵 Song added!');
+  }
+
+  saveData();
+  closeModal();
+  render();
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function deleteSong(entry) {
+  const s = songs.find(x => x.entry === entry);
+  if (!s) return;
+  if (!confirm(`Delete entry #${entry} — "${s.title}"?`)) return;
+  songs = songs.filter(x => x.entry !== entry);
+  saveData();
+  render();
+  showToast('🗑 Song removed.');
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── Export / Import ───────────────────────────────────────────────────────────
+function exportData() {
+  const blob = new Blob([JSON.stringify(songs, null, 2)], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'karaoke-songbook.json';
+  a.click();
+}
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!Array.isArray(data)) throw new Error();
+      const merged = [...songs];
+      let added = 0;
+      data.forEach(s => {
+        if (!merged.find(x => x.entry === s.entry)) {
+          merged.push(s);
+          added++;
+        }
+      });
+      songs = merged;
+      saveData();
+      render();
+      showToast(`✅ Imported ${added} new songs!`);
+    } catch {
+      showToast('❌ Invalid JSON file.');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function printView() {
+  window.print();
+}
+
+// ── Keyboard shortcut ─────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    document.getElementById('searchInput').focus();
+  }
+  if (e.key === 'Enter' && document.getElementById('modal').classList.contains('open')) {
+    saveSong();
+  }
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+loadData();
+render();
+</script>
+
+<style media="print">
+  body { background: white; color: black; }
+  header, .controls, .sort-bar, .tools-bar, .results-info, td:last-child, thead th:last-child { display: none !important; }
+  .table-wrap { border: 1px solid #ccc; border-radius: 0; }
+  .entry-num { color: #000; background: #f5f5f5; border: 1px solid #ccc; }
+  .artist-tag { color: #555; background: none; border: 1px solid #ccc; }
+  .lang-badge { color: #333; background: none; border: 1px solid #ccc; }
+  body::before, body::after { display: none; }
+</style>
+</body>
+</html>
